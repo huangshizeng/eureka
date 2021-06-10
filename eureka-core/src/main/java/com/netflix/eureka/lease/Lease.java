@@ -28,6 +28,8 @@ import com.netflix.eureka.registry.AbstractInstanceRegistry;
  * an explicit cancellation except that there is no communication between the
  * {@link T} and {@link LeaseManager}.
  *
+ * 服务端用来保存客户端的租约信息
+ *
  * @author Karthik Ranganathan, Greg Kim
  */
 public class Lease<T> {
@@ -36,14 +38,20 @@ public class Lease<T> {
         Register, Cancel, Renew
     };
 
+    // 过期时间
     public static final int DEFAULT_DURATION_IN_SECS = 90;
 
+    // 客户端实例
     private T holder;
+    // 下线时间
     private long evictionTimestamp;
+    // 注册时间
     private long registrationTimestamp;
+    // 服务启动时间
     private long serviceUpTimestamp;
-    // Make it volatile so that the expiration task would see this quicker
+    // 最后更新时间，每次续租时，更新该时间戳
     private volatile long lastUpdateTimestamp;
+    // 租约持续时间
     private long duration;
 
     public Lease(T r, int durationInSecs) {
@@ -76,6 +84,8 @@ public class Lease<T> {
     /**
      * Mark the service as up. This will only take affect the first time called,
      * subsequent calls will be ignored.
+     *
+     * 将服务标记为已启动
      */
     public void serviceUp() {
         if (serviceUpTimestamp == 0) {

@@ -49,6 +49,8 @@ import org.slf4j.LoggerFactory;
  * serialized as specified by the <code>@Serializer</code>.
  * </p>
  *
+ * 该类包含注册Eureka Server所需的信息
+ *
  * @author Karthik Ranganathan, Greg Kim
  */
 @ProvidedBy(EurekaConfigBasedInstanceInfoProvider.class)
@@ -140,6 +142,9 @@ public class InstanceInfo {
     private volatile InstanceStatus overriddenStatus = InstanceStatus.UNKNOWN;
     @XStreamOmitField
     private volatile boolean isInstanceInfoDirty = false;
+    /**
+     * 租约信息
+     */
     private volatile LeaseInfo leaseInfo;
     @Auto
     private volatile Boolean isCoordinatingDiscoveryServer = Boolean.FALSE;

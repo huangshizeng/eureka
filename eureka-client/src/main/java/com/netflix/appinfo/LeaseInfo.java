@@ -31,6 +31,8 @@ import com.thoughtworks.xstream.annotations.XStreamOmitField;
  * held in this lease. The lease also tracks the last time it was renewed.
  * </p>
  *
+ * 服务端用来保存客户端的租约信息
+ *
  * @author Karthik Ranganathan, Greg Kim
  *
  */

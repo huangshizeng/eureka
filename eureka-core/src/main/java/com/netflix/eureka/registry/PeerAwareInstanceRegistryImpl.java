@@ -392,9 +392,8 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
     }
 
     /**
-     * Registers the information about the {@link InstanceInfo} and replicates
-     * this information to all peer eureka nodes. If this is replication event
-     * from other replica nodes then it is not replicated.
+     * 注册有关InstanceInfo的信息并将此信息复制到所有对等eureka节点。
+     * 如果这是来自其他副本节点的复制事件，则不会复制它
      *
      * @param info
      *            the {@link InstanceInfo} to be registered and replicated.
@@ -404,11 +403,14 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
      */
     @Override
     public void register(final InstanceInfo info, final boolean isReplication) {
+        // 默认租约过期时间，90s
         int leaseDuration = Lease.DEFAULT_DURATION_IN_SECS;
         if (info.getLeaseInfo() != null && info.getLeaseInfo().getDurationInSecs() > 0) {
             leaseDuration = info.getLeaseInfo().getDurationInSecs();
         }
+        // 调用父类注册方法
         super.register(info, leaseDuration, isReplication);
+        // 向其他Eureka Server节点同步注册信息
         replicateToPeers(Action.Register, info.getAppName(), info.getId(), info, null, isReplication);
     }
 
