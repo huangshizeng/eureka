@@ -92,7 +92,7 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
     private final CircularQueue<Pair<Long, String>> recentRegisteredQueue;
     private final CircularQueue<Pair<Long, String>> recentCanceledQueue;
     /**
-     * 最近租约变更记录队列
+     * 最近租约变更记录队列，用来增量获取
      */
     private ConcurrentLinkedQueue<RecentlyChangedItem> recentlyChangedQueue = new ConcurrentLinkedQueue<RecentlyChangedItem>();
 
@@ -128,6 +128,7 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
 
         this.renewsLastMin = new MeasuredRate(1000 * 60 * 1);
 
+        // 创建一个定时过期最近租约变更记录队列的任务，超过时间则移除
         this.deltaRetentionTimer.schedule(getDeltaRetentionTask(),
                 serverConfig.getDeltaRetentionTimerIntervalInMs(),
                 serverConfig.getDeltaRetentionTimerIntervalInMs());
@@ -277,6 +278,7 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
             // 添加到最近租约变更记录队列
             recentlyChangedQueue.add(new RecentlyChangedItem(lease));
             registrant.setLastUpdatedTimestamp();
+            // 使读写缓存中该应用过期
             invalidateCache(registrant.getAppName(), registrant.getVIPAddress(), registrant.getSecureVipAddress());
             logger.info("Registered instance {}/{} with status {} (replication={})",
                     registrant.getAppName(), registrant.getId(), registrant.getStatus(), isReplication);
@@ -340,6 +342,7 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
                     vip = instanceInfo.getVIPAddress();
                     svip = instanceInfo.getSecureVipAddress();
                 }
+                // 主动过期读写缓存中的该应用
                 invalidateCache(appName, vip, svip);
                 logger.info("Cancelled instance {}/{} (replication={})", appName, id, isReplication);
             }
@@ -605,6 +608,9 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
     public void evict(long additionalLeaseMs) {
         logger.debug("Running the evict task");
 
+        // 判断是否需要清理
+        // 1、没有开启自我保护机制，则清理
+        // 2、开启了自我保护机制，则计算相关阈值，比较收到的心跳数和期望收到的心跳数*0.85
         if (!isLeaseExpirationEnabled()) {
             logger.debug("DS: lease expiration is currently disabled.");
             return;
@@ -717,6 +723,7 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
     public Applications getApplications() {
         boolean disableTransparentFallback = serverConfig.disableTransparentFallbackToOtherRegion();
         if (disableTransparentFallback) {
+            // 获取注册的应用集合
             return getApplicationsFromLocalRegionOnly();
         } else {
             return getApplicationsFromAllRemoteRegions();  // Behavior of falling back to remote region can be disabled.

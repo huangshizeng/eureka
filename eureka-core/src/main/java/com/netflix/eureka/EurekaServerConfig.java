@@ -316,6 +316,8 @@ public interface EurekaServerConfig {
      * strategy to responses. A readWrite cache with an expiration policy, and a readonly cache
      * that caches without expiry.
      *
+     * 目前使用两级缓存策略来响应。 一个带有过期策略的 readWrite 缓存，以及一个不过期缓存的只读缓存
+     *
      * @return true if the read only cache is to be used
      */
     boolean shouldUseReadOnlyResponseCache();
